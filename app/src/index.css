@@ -1,0 +1,269 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Emergency Response Design System */
+    --background: 210 25% 97%;
+    --foreground: 213 75% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 213 75% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 75% 15%;
+
+    /* Primary - Trust Blue */
+    --primary: 213 75% 15%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Soft Blue */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 213 75% 15%;
+
+    /* Muted */
+    --muted: 210 25% 93%;
+    --muted-foreground: 213 30% 45%;
+
+    /* Accent */
+    --accent: 210 40% 96%;
+    --accent-foreground: 213 75% 15%;
+
+    /* Alert Colors */
+    --destructive: 355 78% 56%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Status Colors */
+    --critical: 355 78% 56%;
+    --critical-foreground: 0 0% 100%;
+    
+    --warning: 29 87% 67%;
+    --warning-foreground: 213 75% 15%;
+    
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
+    
+    --info: 200 80% 50%;
+    --info-foreground: 0 0% 100%;
+
+    /* Severity Levels */
+    --severity-critical: 355 78% 56%;
+    --severity-high: 29 87% 60%;
+    --severity-medium: 45 93% 55%;
+    --severity-low: 145 63% 42%;
+
+    /* Status Colors */
+    --status-unverified: 210 20% 60%;
+    --status-verified: 200 80% 50%;
+    --status-in-progress: 29 87% 60%;
+    --status-resolved: 145 63% 42%;
+
+    --border: 210 25% 88%;
+    --input: 210 25% 88%;
+    --ring: 213 75% 15%;
+
+    --radius: 0.625rem;
+
+    /* Sidebar */
+    --sidebar-background: 213 75% 15%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 213 75% 15%;
+    --sidebar-accent: 213 60% 22%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 213 60% 25%;
+    --sidebar-ring: 200 80% 50%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(213, 75%, 15%) 0%, hsl(213, 60%, 25%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(210, 25%, 98%) 100%);
+    --gradient-alert: linear-gradient(135deg, hsl(355, 78%, 56%) 0%, hsl(355, 70%, 45%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(213 75% 15% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(213 75% 15% / 0.1), 0 2px 4px -2px hsl(213 75% 15% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(213 75% 15% / 0.1), 0 4px 6px -4px hsl(213 75% 15% / 0.1);
+    --shadow-glow: 0 0 20px hsl(200 80% 50% / 0.3);
+  }
+
+  .dark {
+    --background: 213 75% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 213 60% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 213 60% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 200 80% 55%;
+    --primary-foreground: 213 75% 8%;
+
+    --secondary: 213 50% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 213 50% 18%;
+    --muted-foreground: 210 25% 60%;
+
+    --accent: 213 50% 18%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 355 78% 56%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 213 50% 20%;
+    --input: 213 50% 20%;
+    --ring: 200 80% 55%;
+
+    --sidebar-background: 213 75% 6%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 200 80% 55%;
+    --sidebar-primary-foreground: 213 75% 8%;
+    --sidebar-accent: 213 50% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 213 50% 18%;
+    --sidebar-ring: 200 80% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .emergency-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .status-glow {
+    box-shadow: 0 0 12px currentColor;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+  }
+
+  .incident-card {
+    @apply bg-card border border-border rounded-lg p-4 card-hover;
+  }
+
+  .metric-card {
+    @apply bg-card border border-border rounded-xl p-6 shadow-sm;
+  }
+
+  .btn-emergency {
+    @apply bg-[hsl(var(--critical))] text-white font-semibold px-6 py-3 rounded-lg;
+    @apply hover:bg-[hsl(355,78%,50%)] transition-all duration-200;
+    @apply shadow-md hover:shadow-lg active:scale-[0.98];
+  }
+
+  .severity-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .severity-critical {
+    @apply bg-[hsl(var(--severity-critical)/0.15)] text-[hsl(var(--severity-critical))];
+  }
+
+  .severity-high {
+    @apply bg-[hsl(var(--severity-high)/0.15)] text-[hsl(var(--severity-high))];
+  }
+
+  .severity-medium {
+    @apply bg-[hsl(var(--severity-medium)/0.15)] text-[hsl(355,25%,30%)];
+  }
+
+  .severity-low {
+    @apply bg-[hsl(var(--severity-low)/0.15)] text-[hsl(var(--severity-low))];
+  }
+
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-unverified {
+    @apply bg-[hsl(var(--status-unverified)/0.15)] text-[hsl(var(--status-unverified))];
+  }
+
+  .status-verified {
+    @apply bg-[hsl(var(--status-verified)/0.15)] text-[hsl(var(--status-verified))];
+  }
+
+  .status-in-progress {
+    @apply bg-[hsl(var(--status-in-progress)/0.15)] text-[hsl(var(--status-in-progress))];
+  }
+
+  .status-resolved {
+    @apply bg-[hsl(var(--status-resolved)/0.15)] text-[hsl(var(--status-resolved))];
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}

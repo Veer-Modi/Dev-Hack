@@ -6,50 +6,40 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
-import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 type LoginRole = 'responder' | 'admin';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, isLoading } = useAuth();
+  const { login } = useAuth();
+  const { t } = useTranslation();
   const [selectedRole, setSelectedRole] = useState<LoginRole>('responder');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      await login(email, password, selectedRole);
-      toast.success(`Logged in as ${selectedRole} successfully`);
-      navigate(selectedRole === 'admin' ? '/admin' : '/responder');
-    } catch (error: any) {
-      toast.error(error.message || 'Login failed. Please check your credentials.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Simulate login
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    login(selectedRole);
+    navigate(selectedRole === 'admin' ? '/admin' : '/responder');
   };
 
   const roleOptions = [
     {
       id: 'responder' as const,
-      label: 'Responder',
-      description: 'Emergency response personnel',
+      label: t('responder'),
+      description: t('responderDescription'),
       icon: Radio,
     },
     {
       id: 'admin' as const,
-      label: 'Administrator',
-      description: 'System management access',
+      label: t('administrator'),
+      description: t('administratorDescription'),
       icon: Shield,
     },
   ];
@@ -61,7 +51,7 @@ export default function Login() {
         <Button variant="ghost" asChild>
           <Link to="/" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back to Home
+            {t('backToHome')}
           </Link>
         </Button>
       </div>
@@ -83,8 +73,8 @@ export default function Login() {
                 <path d="M2 12l10 5 10-5" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold">Welcome Back</h1>
-            <p className="text-muted-foreground">Sign in to access the command center</p>
+            <h1 className="text-2xl font-bold">{t('welcomeBack')}</h1>
+            <p className="text-muted-foreground">{t('signInToAccess')}</p>
           </div>
 
           {/* Role Selection */}
@@ -117,7 +107,7 @@ export default function Login() {
             <div className="rounded-xl border border-border bg-card p-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('emailLabel')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -129,15 +119,15 @@ export default function Login() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t('passwordLabel')}</Label>
                     <a href="#" className="text-xs text-primary hover:underline">
-                      Forgot password?
+                      {t('forgotPassword')}
                     </a>
                   </div>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t('passwordPlaceholder')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -146,22 +136,22 @@ export default function Login() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || isLoading}>
-              {isSubmitting || isLoading ? (
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Signing in...
+                  {t('signingIn')}
                 </>
               ) : (
-                `Sign in as ${selectedRole === 'admin' ? 'Administrator' : 'Responder'}`
+                selectedRole === 'admin' ? t('signInAsAdministrator') : t('signInAsResponder')
               )}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Are you a citizen?{' '}
+            {t('areYouCitizen')}{' '}
             <Link to="/citizen" className="text-primary hover:underline">
-              Go to Citizen Portal
+              {t('goToCitizenPortal')}
             </Link>
           </p>
         </div>

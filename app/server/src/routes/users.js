@@ -1,12 +1,58 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
-import { authenticateToken, requireRole } from '../middleware/auth.js';
-import { generateRandomPassword, sendPasswordEmail } from '../utils/email.js';
+import { auth, authorize } from '../middleware/auth.js';
 
 export const usersRouter = express.Router();
 
-// List users (protected)
-usersRouter.get('/', authenticateToken, requireRole(['admin']), async (req, res) => {
+// Register
+usersRouter.post('/register', async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ error: 'Email already in use' });
+
+    const passwordHash = await bcrypt.hash(password, 8);
+    const user = new User({
+      name,
+      email,
+      passwordHash,
+      role: role || 'citizen',
+    });
+
+    await user.save();
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret');
+    res.status(201).json({ user, token });
+  } catch (e) {
+    res.status(400).json({ error: 'Failed to register' });
+  }
+});
+
+// Login
+usersRouter.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user || !user.isActive) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret');
+    res.json({ user, token });
+  } catch (e) {
+    res.status(400).json({ error: 'Login failed' });
+  }
+});
+
+// Get current user
+usersRouter.get('/me', auth, async (req, res) => {
+  res.json(req.user);
+});
+
+// List users (Admin only)
+usersRouter.get('/', auth, authorize(['admin']), async (req, res) => {
   try {
     const { role, active } = req.query;
     const q = {};
@@ -19,150 +65,40 @@ usersRouter.get('/', authenticateToken, requireRole(['admin']), async (req, res)
   }
 });
 
-// Create user (admin only, generates password and sends email)
-usersRouter.post('/', authenticateToken, requireRole(['admin']), async (req, res) => {
+// Create user
+usersRouter.post('/', async (req, res) => {
   try {
-    const { name, email, role, password } = req.body;
-
-    console.log('Create user request:', { name, email, role, hasCustomPassword: !!password });
-
-    // Validate input
-    if (!name || !email || !role) {
-      return res.status(400).json({ 
-        error: 'Name, email, and role are required' 
-      });
-    }
-
-    if (!['citizen', 'responder', 'admin'].includes(role)) {
-      return res.status(400).json({ 
-        error: 'Invalid role. Must be citizen, responder, or admin' 
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ 
-        error: 'User with this email already exists' 
-      });
-    }
-
-    // Use provided password or generate random one
-    let userPassword = password;
-    if (!password) {
-      userPassword = generateRandomPassword();
-    }
-    
-    console.log(`Password for ${email}: ${userPassword}`);
-
-    // Create user with password (will be hashed by pre-save middleware)
-    const created = await User.create({ 
-      name, 
-      email, 
-      role, 
-      passwordHash: userPassword,
-      emailVerified: true // Admin-created users are pre-verified
-    });
-
-    console.log('User created successfully:', created._id);
-
-    // Send password email (non-blocking)
-    sendPasswordEmail(email, name, userPassword, role).catch(err => {
-      console.error('Email sending failed:', err);
-    });
-
-    // Return user without password
-    const userResponse = created.toJSON();
-    delete userResponse.passwordHash;
-
-    const message = password 
-      ? 'User created successfully with custom password.'
-      : 'User created successfully. Password sent to email.';
-
-    res.status(201).json({
-      ...userResponse,
-      message,
-      password: password ? undefined : userPassword // Include generated password in response for admin to see
-    });
-
+    const { name, email, role } = req.body;
+    const created = await User.create({ name, email, role });
+    res.status(201).json(created);
   } catch (e) {
-    console.error('Create user error:', e);
-    if (e.code === 11000) { // MongoDB duplicate key error
-      return res.status(400).json({ error: 'User with this email already exists' });
-    }
-    if (e.name === 'ValidationError') {
-      return res.status(400).json({ error: e.message });
-    }
-    res.status(500).json({ error: 'Failed to create user: ' + e.message });
+    res.status(400).json({ error: 'Failed to create user' });
   }
 });
 
-// Update user (admin only)
-usersRouter.patch('/:id', authenticateToken, requireRole(['admin']), async (req, res) => {
+// Update user (name/email), change role, activate/deactivate
+usersRouter.patch('/:id', async (req, res) => {
   try {
     const { name, email, role, isActive } = req.body;
-    const updateData = {};
-    
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (role) updateData.role = role;
-    if (isActive != null) updateData.isActive = isActive;
-
     const updated = await User.findByIdAndUpdate(
       req.params.id,
-      { $set: updateData },
+      { $set: { ...(name && { name }), ...(email && { email }), ...(role && { role }), ...(isActive != null && { isActive }) } },
       { new: true }
     );
-    
-    if (!updated) return res.status(404).json({ error: 'User not found' });
+    if (!updated) return res.status(404).json({ error: 'Not found' });
     res.json(updated);
   } catch (e) {
-    console.error('Update user error:', e);
-    if (e.code === 11000) {
-      return res.status(400).json({ error: 'Email already exists' });
-    }
     res.status(400).json({ error: 'Failed to update user' });
   }
 });
 
-// Delete user (admin only)
-usersRouter.delete('/:id', authenticateToken, requireRole(['admin']), async (req, res) => {
+// Delete user
+usersRouter.delete('/:id', async (req, res) => {
   try {
     const deleted = await User.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ error: 'User not found' });
-    res.json({ ok: true, message: 'User deleted successfully' });
+    if (!deleted) return res.status(404).json({ error: 'Not found' });
+    res.json({ ok: true });
   } catch (e) {
-    console.error('Delete user error:', e);
     res.status(400).json({ error: 'Failed to delete user' });
-  }
-});
-
-// Reset user password (admin only)
-usersRouter.post('/:id/reset-password', authenticateToken, requireRole(['admin']), async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    // Generate new password
-    const newPassword = generateRandomPassword();
-    
-    // Update password
-    user.passwordHash = newPassword;
-    await user.save();
-
-    // Send new password via email
-    const emailSent = await sendPasswordEmail(user.email, user.name, newPassword, user.role);
-    
-    if (!emailSent) {
-      console.warn(`Failed to send password reset email to ${user.email}`);
-    }
-
-    res.json({ 
-      message: 'Password reset successfully. New password sent to email.' 
-    });
-
-  } catch (e) {
-    console.error('Reset password error:', e);
-    res.status(500).json({ error: 'Failed to reset password' });
   }
 });

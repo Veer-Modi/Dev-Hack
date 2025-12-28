@@ -21,6 +21,10 @@ const IncidentSchema = new mongoose.Schema(
     assignedTo: { type: String },
     mediaUrls: [{ type: String }],
     upvotes: { type: Number, default: 0, index: true },
+    downvotes: { type: Number, default: 0, index: true },
+    votedBy: [{ type: String }], // Array of User IDs
+    isDuplicate: { type: Boolean, default: false },
+    duplicateOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Incident' },
   },
   { timestamps: { createdAt: 'reportedAt', updatedAt: 'updatedAt' } }
 );

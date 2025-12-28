@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Upload, X, CheckCircle, AlertTriangle, Navigation, Loader2 } from 'lucide-react';
+import { MapPin, Upload, X, CheckCircle, AlertTriangle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,60 +20,29 @@ import LeafletMap from '@/components/map/LeafletMap';
 import { useStore } from '@/lib/store';
 
 const steps = [
-  { id: 1, title: 'Your Info', description: 'Name and contact' },
-  { id: 2, title: 'Type', description: 'Select incident type' },
-  { id: 3, title: 'Details', description: 'Describe the incident' },
-  { id: 4, title: 'Location', description: 'Confirm location' },
-  { id: 5, title: 'Media', description: 'Add photos (optional)' },
+  { id: 1, title: 'Type', description: 'Select incident type' },
+  { id: 2, title: 'Details', description: 'Describe the incident' },
+  { id: 3, title: 'Location', description: 'Confirm location' },
+  { id: 4, title: 'Media', description: 'Add photos (optional)' },
 ];
-
-// Reverse geocoding function using Nominatim API
-async function reverseGeocode(lat: number, lng: number): Promise<string> {
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-      {
-        headers: {
-          'User-Agent': 'EmergencyReportingApp/1.0'
-        }
-      }
-    );
-    const data = await response.json();
-    if (data.display_name) {
-      return data.display_name;
-    }
-    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-  } catch (error) {
-    console.error('Reverse geocoding failed:', error);
-    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-  }
-}
 
 export default function ReportIncident() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [citizenId] = useState(() => {
-    // Generate citizen ID on component mount
-    return globalThis.crypto?.randomUUID?.() ?? `citizen-${Date.now()}`;
-  });
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
     type: '',
     description: '',
-    location: '',
+    location: '123 Main Street, Downtown (Auto-detected)',
     media: [] as File[],
   });
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const { createIncident } = useStore();
 
   const handleNext = () => {
-    if (currentStep < 5) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -84,97 +53,15 @@ export default function ReportIncident() {
     }
   };
 
-  const handleDetectLocation = async () => {
-    if (!navigator.geolocation) {
-      toast({
-        title: 'Geolocation not supported',
-        description: 'Your browser does not support geolocation. Please enter location manually.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsDetectingLocation(true);
-    
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const pos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          setCoords(pos);
-          setMapCenter(pos);
-          
-          // Reverse geocode to get address
-          try {
-            const address = await reverseGeocode(pos.lat, pos.lng);
-            setFormData((prev) => ({ ...prev, location: address }));
-            toast({
-              title: 'Location detected',
-              description: 'Your current location has been detected successfully.',
-            });
-          } catch (reverseError) {
-            // If reverse geocoding fails, still use coordinates
-            const coordStr = `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
-            setFormData((prev) => ({ ...prev, location: coordStr }));
-            toast({
-              title: 'Location detected',
-              description: 'Coordinates detected. You can enter address manually or use coordinates.',
-            });
-          }
-        } catch (error) {
-          console.error('Error processing location:', error);
-          toast({
-            title: 'Location detection error',
-            description: 'An error occurred while processing your location. Please try again or enter manually.',
-            variant: 'destructive',
-          });
-        } finally {
-          setIsDetectingLocation(false);
-        }
-      },
-      (error) => {
-        setIsDetectingLocation(false);
-        let errorMessage = 'Unable to detect your location. Please enter it manually.';
-        
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Location access denied. Please enable location permissions in your browser settings.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information is unavailable. Please enter location manually.';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Location request timed out. Please try again or enter location manually.';
-            break;
-          default:
-            errorMessage = error.message || errorMessage;
-            break;
-        }
-        
-        toast({
-          title: 'Location detection failed',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      },
-      { 
-        enableHighAccuracy: true, 
-        timeout: 15000, 
-        maximumAge: 60000 // Accept cached location up to 1 minute old
-      }
-    );
-  };
-
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
+    // Simulate API call
     try {
       const location = {
         lat: coords?.lat ?? 40.7128,
         lng: coords?.lng ?? -74.006,
-        address: formData.location || 'Location not specified',
+        address: formData.location,
       };
       const title = formData.type ? `${formData.type} reported` : 'Incident reported';
       createIncident({
@@ -184,7 +71,7 @@ export default function ReportIncident() {
         severity: 'medium',
         status: 'unverified',
         location,
-        reportedBy: citizenId,
+        reportedBy: 'citizen-1',
         mediaUrls: [],
         assignedTo: undefined,
       } as any);
@@ -216,34 +103,20 @@ export default function ReportIncident() {
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return !!formData.name && !!formData.phone;
-      case 2:
         return !!formData.type;
-      case 3:
+      case 2:
         return formData.description.length >= 10;
-      case 4:
+      case 3:
         return !!formData.location;
-      case 5:
+      case 4:
         return true;
       default:
         return false;
     }
   };
 
-  // Handle map position selection for reverse geocoding
-  const handleMapPositionSelect = async (pos: { lat: number; lng: number }) => {
-    setCoords(pos);
-    setMapCenter(pos);
-    try {
-      const address = await reverseGeocode(pos.lat, pos.lng);
-      setFormData((prev) => ({ ...prev, location: address }));
-    } catch (error) {
-      setFormData((prev) => ({ ...prev, location: `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}` }));
-    }
-  };
-
   return (
-    <DashboardLayout role="citizen" userName={formData.name || "Citizen"}>
+    <DashboardLayout role="citizen" userName="John Smith">
       <div className="mx-auto max-w-2xl p-6 md:p-8">
         {/* Header */}
         <div className="mb-8">
@@ -255,11 +128,6 @@ export default function ReportIncident() {
           <p className="mt-1 text-muted-foreground">
             Please provide as much detail as possible to help responders.
           </p>
-          {citizenId && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Citizen ID: <span className="font-mono">{citizenId}</span>
-            </p>
-          )}
         </div>
 
         {/* Progress Steps */}
@@ -308,42 +176,6 @@ export default function ReportIncident() {
           {currentStep === 1 && (
             <div className="space-y-4 animate-fade-in">
               <div>
-                <Label htmlFor="name" className="text-base font-medium">
-                  Your Name
-                </Label>
-                <p className="mb-3 text-sm text-muted-foreground">
-                  Please enter your full name for incident reporting.
-                </p>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  className="h-12"
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone" className="text-base font-medium">
-                  Phone Number
-                </Label>
-                <p className="mb-3 text-sm text-muted-foreground">
-                  Enter your contact number for follow-up if needed.
-                </p>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={formData.phone}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                  className="h-12"
-                />
-              </div>
-            </div>
-          )}
-
-          {currentStep === 2 && (
-            <div className="space-y-4 animate-fade-in">
-              <div>
                 <Label htmlFor="type" className="text-base font-medium">
                   What type of incident are you reporting?
                 </Label>
@@ -366,7 +198,7 @@ export default function ReportIncident() {
             </div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <div className="space-y-4 animate-fade-in">
               <div>
                 <Label htmlFor="description" className="text-base font-medium">
@@ -389,46 +221,19 @@ export default function ReportIncident() {
             </div>
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 3 && (
             <div className="space-y-4 animate-fade-in">
               <div>
                 <Label htmlFor="location" className="text-base font-medium">
                   Incident Location
                 </Label>
                 <p className="mb-3 text-sm text-muted-foreground">
-                  Detect your current location or enter it manually.
+                  We've detected your location. Confirm or adjust if needed.
                 </p>
-                
-                <div className="mb-4 flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleDetectLocation}
-                    disabled={isDetectingLocation}
-                    className="flex items-center gap-2"
-                  >
-                    {isDetectingLocation ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Detecting...
-                      </>
-                    ) : (
-                      <>
-                        <Navigation className="h-4 w-4" />
-                        Detect
-                      </>
-                    )}
-                  </Button>
-                  <div className="flex-1 text-sm text-muted-foreground flex items-center">
-                    or enter location manually below
-                  </div>
-                </div>
-                
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="location"
-                    placeholder="Enter location address or click on map"
                     value={formData.location}
                     onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
                     className="h-12 pl-10"
@@ -439,27 +244,17 @@ export default function ReportIncident() {
               {/* Map Picker (Leaflet) */}
               <div className="aspect-video overflow-hidden rounded-lg border border-border bg-muted">
                 <LeafletMap
-                  key={mapCenter ? `${mapCenter.lat}-${mapCenter.lng}` : 'default'}
-                  centerOnUser={!mapCenter}
+                  centerOnUser
                   incidents={[]}
                   selectableMarker
-                  onSelectPosition={handleMapPositionSelect}
-                  onUserLocation={(pos) => {
-                    if (!coords && !mapCenter) {
-                      setMapCenter(pos);
-                      setCoords(pos);
-                    }
-                  }}
+                  onSelectPosition={(pos) => setCoords(pos)}
                   className="h-full w-full"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Click on the map to set the incident location manually, or use the Detect button above
-              </p>
             </div>
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 4 && (
             <div className="space-y-4 animate-fade-in">
               <div>
                 <Label className="text-base font-medium">
@@ -522,7 +317,7 @@ export default function ReportIncident() {
               Back
             </Button>
             
-            {currentStep < 5 ? (
+            {currentStep < 4 ? (
               <Button onClick={handleNext} disabled={!canProceed()}>
                 Continue
               </Button>

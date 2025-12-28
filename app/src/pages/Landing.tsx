@@ -3,10 +3,12 @@ import { AlertTriangle, Shield, Clock, Users, Radio, ArrowRight, CheckCircle } f
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/layout/Navbar';
 import { mockIncidents } from '@/data/mockData';
+import { useTranslation } from 'react-i18next';
 
 export default function Landing() {
   const activeIncidents = mockIncidents.filter((i) => i.status !== 'resolved').length;
   const ongoingResponses = mockIncidents.filter((i) => i.status === 'in-progress').length;
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,31 +26,30 @@ export default function Landing() {
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-2 text-sm text-primary-foreground backdrop-blur-sm animate-fade-in">
               <Radio className="h-4 w-4 animate-pulse-slow" />
-              Real-time Emergency Coordination Platform
+              {t('heroTagline')}
             </div>
             
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl animate-slide-up">
-              Report Emergencies.
+              {t('heroTitleLine1')}
               <br />
-              <span className="text-info">Enable Faster Response.</span>
+              <span className="text-info">{t('heroTitleLine2')}</span>
             </h1>
             
             <p className="mx-auto mb-10 max-w-2xl text-lg text-primary-foreground/80 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              A unified platform connecting citizens with emergency responders. Report incidents in real-time, 
-              track response progress, and help your community stay safe.
+              {t('heroDescription')}
             </p>
             
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <Button size="xl" variant="emergency" asChild className="w-full sm:w-auto">
                 <Link to="/report" className="gap-2">
                   <AlertTriangle className="h-5 w-5" />
-                  Report an Incident
+                  {t('reportIncident')}
                 </Link>
               </Button>
               <Button size="xl" variant="heroOutline" asChild className="w-full sm:w-auto">
                 <Link to="/login" className="gap-2">
                   <Shield className="h-5 w-5" />
-                  Login (Responder / Admin)
+                  {t('loginResponderAdmin')}
                 </Link>
               </Button>
             </div>
@@ -72,7 +73,7 @@ export default function Landing() {
                 <AlertTriangle className="h-7 w-7 text-critical" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Incidents</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('activeIncidents')}</p>
                 <p className="text-3xl font-bold">{activeIncidents}</p>
               </div>
               <div className="ml-auto h-2 w-2 animate-pulse-slow rounded-full bg-critical" />
@@ -83,7 +84,7 @@ export default function Landing() {
                 <Clock className="h-7 w-7 text-warning" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Ongoing Responses</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('ongoingResponses')}</p>
                 <p className="text-3xl font-bold">{ongoingResponses}</p>
               </div>
             </div>
@@ -93,7 +94,7 @@ export default function Landing() {
                 <Users className="h-7 w-7 text-success" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Responders Active</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('respondersActive')}</p>
                 <p className="text-3xl font-bold">24</p>
               </div>
             </div>
@@ -105,10 +106,9 @@ export default function Landing() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="mb-12 text-center">
-            <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">How It Works</h2>
+            <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">{t('howItWorks')}</h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              Our platform streamlines emergency reporting and response coordination, 
-              ensuring help reaches where it's needed most.
+              {t('howItWorksDescription')}
             </p>
           </div>
 
@@ -116,20 +116,20 @@ export default function Landing() {
             {[
               {
                 icon: AlertTriangle,
-                title: 'Report Instantly',
-                description: 'Citizens can quickly report emergencies with location, photos, and detailed descriptions.',
+                title: t('featureReportInstantlyTitle'),
+                description: t('featureReportInstantlyDescription'),
                 color: 'critical',
               },
               {
                 icon: Shield,
-                title: 'Verify & Prioritize',
-                description: 'Responders verify reports and prioritize based on severity, location, and resources.',
+                title: t('featureVerifyTitle'),
+                description: t('featureVerifyDescription'),
                 color: 'info',
               },
               {
                 icon: CheckCircle,
-                title: 'Coordinate Response',
-                description: 'Real-time updates keep everyone informed from incident report to resolution.',
+                title: t('featureCoordinateTitle'),
+                description: t('featureCoordinateDescription'),
                 color: 'success',
               },
             ].map((feature, index) => (
@@ -154,21 +154,20 @@ export default function Landing() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Ready to Make a Difference?
+              {t('readyToMakeDifference')}
             </h2>
             <p className="mb-8 text-lg text-muted-foreground">
-              Join thousands of citizens helping to keep their communities safe through 
-              rapid incident reporting and coordination.
+              {t('ctaDescription')}
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button size="lg" asChild>
                 <Link to="/citizen" className="gap-2">
-                  Get Started
+                  {t('getStarted')}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/feed">View Live Feed</Link>
+                <Link to="/feed">{t('viewLiveFeed')}</Link>
               </Button>
             </div>
           </div>
@@ -193,12 +192,12 @@ export default function Landing() {
                   <path d="M2 12l10 5 10-5" />
                 </svg>
               </div>
-              <span className="font-semibold">RapidResponse</span>
+              <span className="font-semibold">{t('appTitle')}</span>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Help</a>
-              <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-              <a href="#" className="hover:text-foreground transition-colors">Terms</a>
+              <a href="#" className="hover:text-foreground transition-colors">{t('help')}</a>
+              <a href="#" className="hover:text-foreground transition-colors">{t('privacy')}</a>
+              <a href="#" className="hover:text-foreground transition-colors">{t('terms')}</a>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2024 RapidResponse. All rights reserved.

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bell, Menu, User, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,12 +22,6 @@ interface NavbarProps {
   showMenu?: boolean;
 }
 
-const roleLabels: Record<UserRole, string> = {
-  citizen: 'Citizen',
-  responder: 'Responder',
-  admin: 'Administrator',
-};
-
 const roleColors: Record<UserRole, string> = {
   citizen: 'bg-info/10 text-info',
   responder: 'bg-warning/10 text-warning',
@@ -34,8 +30,15 @@ const roleColors: Record<UserRole, string> = {
 
 export function Navbar({ userRole, userName, onMenuToggle, showMenu }: NavbarProps) {
   const location = useLocation();
-  const isLanding = location.pathname === '/';
+  void location;
   const [notifications] = useState(3);
+  const { t } = useTranslation();
+
+  const roleLabels: Record<UserRole, string> = {
+    citizen: t('citizen'),
+    responder: t('responder'),
+    admin: t('administrator'),
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -62,7 +65,7 @@ export function Navbar({ userRole, userName, onMenuToggle, showMenu }: NavbarPro
               </svg>
             </div>
             <span className="hidden font-semibold text-foreground sm:inline-block">
-              RapidResponse
+              {t('appTitle')}
             </span>
           </Link>
         </div>
@@ -78,6 +81,9 @@ export function Navbar({ userRole, userName, onMenuToggle, showMenu }: NavbarPro
 
         {/* Right section */}
         <div className="flex items-center gap-2">
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+          
           {userRole ? (
             <>
               {/* Notifications */}
@@ -98,29 +104,29 @@ export function Navbar({ userRole, userName, onMenuToggle, showMenu }: NavbarPro
                       <User className="h-4 w-4" />
                     </div>
                     <span className="hidden text-sm font-medium md:inline-block">
-                      {userName || 'User'}
+                      {userName || t('user')}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-popover">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{userName || 'User'}</p>
+                    <p className="text-sm font-medium">{userName || t('user')}</p>
                     <p className="text-xs text-muted-foreground">{roleLabels[userRole]}</p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
-                    Profile
+                    {t('profile')}
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                    {t('settings')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
-                    <Link to="/">Logout</Link>
+                    <Link to="/">{t('logout')}</Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -128,10 +134,10 @@ export function Navbar({ userRole, userName, onMenuToggle, showMenu }: NavbarPro
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="ghost" asChild>
-                <Link to="/login">Login</Link>
+                <Link to="/login">{t('loginResponderAdmin')}</Link>
               </Button>
               <Button variant="default" asChild>
-                <Link to="/report">Report Incident</Link>
+                <Link to="/report">{t('reportIncident')}</Link>
               </Button>
             </div>
           )}

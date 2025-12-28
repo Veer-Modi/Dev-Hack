@@ -8,7 +8,11 @@ import { incidentsRouter } from './routes/incidents.js';
 import { usersRouter } from './routes/users.js';
 import { activityRouter } from './routes/activity.js';
 import { adminRouter } from './routes/admin.js';
-import { authRouter } from './routes/auth.js';
+import { analyticsRouter } from './routes/analytics.js';
+import { leaderboardsRouter } from './routes/leaderboards.js';
+import { notificationsRouter, notifyUsersOfIncident } from './routes/notifications.js';
+import { mediaRouter } from './routes/media.js';
+import { surveysRouter, triggerSurveyForIncident } from './routes/surveys.js';
 
 dotenv.config();
 
@@ -16,16 +20,14 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: ['http://localhost:8080', 'http://localhost:8081', 'http://172.29.41.39:8080', 'http://172.29.41.39:8081'],
+    origin: process.env.CORS_ORIGIN?.split(',') || '*',
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
   })
 );
 
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
-  cors: { origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8080', 'http://localhost:3001'] },
+  cors: { origin: process.env.CORS_ORIGIN?.split(',') || '*' },
 });
 
 io.on('connection', (socket) => {
@@ -38,7 +40,11 @@ app.use('/api/incidents', incidentsRouter(io));
 app.use('/api/users', usersRouter);
 app.use('/api/activity', activityRouter);
 app.use('/api/admin', adminRouter);
-app.use('/api/auth', authRouter);
+app.use('/api/analytics', analyticsRouter(io));
+app.use('/api/leaderboards', leaderboardsRouter(io));
+app.use('/api/notifications', notificationsRouter(io));
+app.use('/api/media', mediaRouter(io));
+app.use('/api/surveys', surveysRouter(io));
 
 const PORT = process.env.PORT || 3001;
 

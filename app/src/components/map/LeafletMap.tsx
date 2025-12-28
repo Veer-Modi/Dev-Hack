@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet'
 import L, { LatLngExpression } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { Hotspot } from '@/lib/api'
 
 // Fix default icon paths for Vite
 L.Icon.Default.mergeOptions({
@@ -19,7 +20,9 @@ export type LeafletIncident = {
 
 type Props = {
   incidents: LeafletIncident[]
+  hotspots?: Hotspot[]
   onMarkerClick?: (id: string) => void
+  onHotspotClick?: (hotspot: Hotspot) => void
   selectableMarker?: boolean
   onSelectPosition?: (pos: { lat: number; lng: number }) => void
   centerOnUser?: boolean
@@ -49,7 +52,9 @@ function ClickSelectable({ onSelect }: { onSelect?: (pos: { lat: number; lng: nu
 
 export default function LeafletMap({
   incidents,
+  hotspots = [],
   onMarkerClick,
+  onHotspotClick,
   selectableMarker,
   onSelectPosition,
   centerOnUser = true,
@@ -69,10 +74,8 @@ export default function LeafletMap({
         setUserPos(p)
         onUserLocation?.(p)
       },
-      (error) => {
-        console.warn('Geolocation error:', error.message);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 10000 }
     )
   }, [onUserLocation])
 
@@ -100,6 +103,51 @@ export default function LeafletMap({
         )}
         {selectableMarker && <ClickSelectable onSelect={(pos) => { setSelected(pos); onSelectPosition?.(pos) }} />}
         {selected && <Marker position={[selected.lat, selected.lng]} />}
+        
+        {/* Render hotspots */}
+        {hotspots.map((hotspot, index) => {
+          // Calculate radius based on score (higher score = larger radius)
+          const radius = Math.min(1000, Math.max(100, hotspot.score * 50));
+          
+          // Determine color based on severity
+          const getColor = () => {
+            switch(hotspot.severity) {
+              case 'critical': return '#dc2626'; // red
+              case 'high': return '#ea580c';     // orange
+              case 'medium': return '#d97706';   // amber
+              default: return '#ca8a04';        // yellow
+            }
+          };
+          
+          return (
+            <Circle
+              {...({
+                key: `hotspot-${index}`,
+                center: [hotspot.location.lat, hotspot.location.lng],
+                radius: radius,
+                pathOptions: { 
+                  color: getColor(), 
+                  fillColor: getColor(),
+                  fillOpacity: 0.2,
+                  weight: 2
+                }
+              } as any)}
+              eventHandlers={{
+                click: () => onHotspotClick?.(hotspot)
+              }}
+            >
+              <Popup>
+                <div className="space-y-1">
+                  <p className="font-medium text-sm">Incident Hotspot</p>
+                  <p className="text-xs text-muted-foreground capitalize">{hotspot.type} ({hotspot.severity})</p>
+                  <p className="text-xs">{hotspot.incidents} incidents</p>
+                  <p className="text-xs">Score: {hotspot.score.toFixed(2)}</p>
+                </div>
+              </Popup>
+            </Circle>
+          );
+        })}
+        
         {incidents.map((i) => (
           <Marker
             key={i.id}

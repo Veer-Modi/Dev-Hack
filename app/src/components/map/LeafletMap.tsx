@@ -69,8 +69,10 @@ export default function LeafletMap({
         setUserPos(p)
         onUserLocation?.(p)
       },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 10000 }
+      (error) => {
+        console.warn('Geolocation error:', error.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     )
   }, [onUserLocation])
 

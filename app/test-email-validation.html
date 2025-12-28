@@ -1,0 +1,15 @@
+// Test different email formats
+const testEmails = [
+  'admin@rapidresponse.com',
+  'admin@rapidresponse.com ',
+  ' admin@rapidresponse.com',
+  'ADMIN@RAPIDRESPONSE.COM'
+];
+
+testEmails.forEach(email => {
+  console.log(`Testing email: "${email}"`);
+  const input = document.createElement('input');
+  input.type = 'email';
+  input.value = email;
+  console.log(`Valid: ${input.checkValidity()}`);
+});

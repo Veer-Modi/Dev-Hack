@@ -8,6 +8,7 @@ import { incidentsRouter } from './routes/incidents.js';
 import { usersRouter } from './routes/users.js';
 import { activityRouter } from './routes/activity.js';
 import { adminRouter } from './routes/admin.js';
+import { authRouter } from './routes/auth.js';
 
 dotenv.config();
 
@@ -15,14 +16,16 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(',') || '*',
+    origin: ['http://localhost:8080', 'http://localhost:8081', 'http://172.29.41.39:8080', 'http://172.29.41.39:8081'],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   })
 );
 
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
-  cors: { origin: process.env.CORS_ORIGIN?.split(',') || '*' },
+  cors: { origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8080', 'http://localhost:3001'] },
 });
 
 io.on('connection', (socket) => {
@@ -35,6 +38,7 @@ app.use('/api/incidents', incidentsRouter(io));
 app.use('/api/users', usersRouter);
 app.use('/api/activity', activityRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/auth', authRouter);
 
 const PORT = process.env.PORT || 3001;
 

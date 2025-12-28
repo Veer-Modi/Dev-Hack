@@ -6,25 +6,37 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
+import { toast } from 'sonner';
 
 type LoginRole = 'responder' | 'admin';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isLoading } = useAuth();
   const [selectedRole, setSelectedRole] = useState<LoginRole>('responder');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    // Simulate login
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    login(selectedRole);
-    navigate(selectedRole === 'admin' ? '/admin' : '/responder');
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      await login(email, password, selectedRole);
+      toast.success(`Logged in as ${selectedRole} successfully`);
+      navigate(selectedRole === 'admin' ? '/admin' : '/responder');
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const roleOptions = [
@@ -134,8 +146,8 @@ export default function Login() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-              {isLoading ? (
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || isLoading}>
+              {isSubmitting || isLoading ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   Signing in...
